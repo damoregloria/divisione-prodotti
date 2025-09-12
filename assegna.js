@@ -26,6 +26,11 @@ function login(){
     }
 }
 
+// Formatta prezzo con centesimi
+function formatEuro(value){
+    return Number(value).toFixed(2).replace('.',',') + ' €';
+}
+
 // Mostra tabella
 function mostraTabella(){
     let table = document.getElementById("tabella");
@@ -36,13 +41,15 @@ function mostraTabella(){
             <th>Prezzo Acquisto</th>
             <th>Margine</th>
             <th>Venditore</th>
-            <th>Prezzo Vendita</th>
-            <th>Vendite Effettive</th>
+            <th>Prezzo Vendita Stimato</th>
+            <th>Prezzo Vendita Effettivo</th>
+            <th>Azioni</th>
         </tr>
     `;
 
     prodotti.forEach((p,index)=>{
-        if(!p.prezzo_vendita && p.margine){
+        // calcolo automatico prezzo vendita stimato
+        if((p.prezzo_vendita===null || p.prezzo_vendita===undefined) && p.margine){
             p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
         }
 
@@ -62,8 +69,8 @@ function mostraTabella(){
                     <option value="Altro" ${p.categoria==='Altro'?'selected':''}>Altro</option>
                 </select>
             </td>
-            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${p.prezzo_acquisto} €</td>
-            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${p.margine} €</td>
+            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${formatEuro(p.prezzo_acquisto)}</td>
+            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${formatEuro(p.margine)}</td>
             <td>
                 <select onchange="modifica(${index},'venditore',this.value)">
                     <option value="">--</option>
@@ -71,21 +78,29 @@ function mostraTabella(){
                     <option value="Ricky" ${p.venditore==='Ricky'?'selected':''}>Ricky</option>
                 </select>
             </td>
-            <td contenteditable="true" onblur="modifica(${index},'prezzo_vendita',this.innerText)">${p.prezzo_vendita ? p.prezzo_vendita+' €' : ''}</td>
-            <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive || ""}</td>
+            <td>${p.prezzo_vendita ? formatEuro(p.prezzo_vendita) : ''}</td>
+            <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive ? formatEuro(p.vendite_effettive) : ''}</td>
+            <td><button onclick="eliminaProdotto(${index})">Elimina</button></td>
         `;
     });
 }
 
 // Modifica tabella
 function modifica(index, campo, valore){
+    valore = valore.replace('€','').replace(',','.');
     if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
-        let num = Number(valore.replace('€','').trim());
-        if(num < 0){ alert("Valore non può essere negativo!"); mostraTabella(); return; }
+        let num = Number(valore.trim());
+        if(isNaN(num) || num < 0){ alert("Valore non valido"); mostraTabella(); return; }
         prodotti[index][campo] = num;
+
+        // ricalcolo automatico prezzo vendita stimato
+        if((campo==='prezzo_acquisto' || campo==='margine') && (!prodotti[index].prezzo_vendita || prodotti[index].prezzo_vendita===0)){
+            prodotti[index].prezzo_vendita = Number(prodotti[index].prezzo_acquisto) + Number(prodotti[index].margine);
+        }
     } else {
         prodotti[index][campo] = valore;
     }
+    mostraTabella();
     salvaLocalStorage();
 }
 
@@ -104,7 +119,7 @@ function mostraForm(){
             </select>
             <input type="number" id="prezzo_acquisto" placeholder="Prezzo acquisto" min="0" required>
             <input type="number" id="margine" placeholder="Margine" min="0" required>
-            <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita (opzionale)" min="0">
+            <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita stimato (opzionale)" min="0">
             <select id="venditore">
                 <option value="">--</option>
                 <option value="Romeo">Romeo</option>
@@ -136,6 +151,13 @@ function aggiungiProdottoForm(event){
     salvaLocalStorage();
 }
 
+// Elimina prodotto
+function eliminaProdotto(index){
+    prodotti.splice(index,1);
+    mostraTabella();
+    salvaLocalStorage();
+}
+
 // Riequilibrio automatico
 function riequilibra(){
     prodottiRiequilibrati.clear();
@@ -145,5 +167,8 @@ function riequilibra(){
     mostraTabella();
     salvaLocalStorage();
 }
+
+window.onload = function(){ };
+
 
 window.onload = function(){ };
