@@ -17,7 +17,7 @@ function caricaLocalStorage() {
     return false;
 }
 
-// Mostra tabella interattiva
+// Mostra tabella interattiva e aggiorna guadagni
 function mostraTabella(){
     let table = document.getElementById("tabella");
     table.innerHTML = `
