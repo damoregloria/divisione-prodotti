@@ -1,7 +1,25 @@
 let prodotti = [];
 
-// Caricamento CSV
+// Funzione per salvare dati su localStorage
+function salvaLocalStorage() {
+    localStorage.setItem("prodotti", JSON.stringify(prodotti));
+}
+
+// Funzione per caricare dati da localStorage
+function caricaLocalStorage() {
+    let dati = localStorage.getItem("prodotti");
+    if(dati){
+        prodotti = JSON.parse(dati);
+        mostraTabella();
+        return true;
+    }
+    return false;
+}
+
+// Caricamento CSV (solo se localStorage è vuoto)
 document.getElementById('csvFile').addEventListener('change', function(e){
+    if(caricaLocalStorage()) return; // già presente nel localStorage
+
     let file = e.target.files[0];
     Papa.parse(file, {
         header: true,
@@ -9,6 +27,7 @@ document.getElementById('csvFile').addEventListener('change', function(e){
         complete: function(results) {
             prodotti = results.data;
             mostraTabella();
+            salvaLocalStorage();
         }
     });
 });
@@ -23,7 +42,6 @@ function mostraTabella(){
         </tr>
     `;
     prodotti.forEach((p,index)=>{
-        // Calcolo automatico prezzo vendita se mancante
         if(!p.prezzo_vendita && p.margine){
             p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
         }
@@ -33,7 +51,13 @@ function mostraTabella(){
             <td contenteditable="true" onblur="modifica(${index},'categoria',this.innerText)">${p.categoria}</td>
             <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${p.prezzo_acquisto}</td>
             <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${p.margine}</td>
-            <td contenteditable="true" onblur="modifica(${index},'venditore',this.innerText)">${p.venditore || ""}</td>
+            <td>
+                <select onchange="modifica(${index},'venditore',this.value)">
+                    <option value="">--</option>
+                    <option value="Romeo" ${p.venditore==='Romeo'?'selected':''}>Romeo</option>
+                    <option value="Ricky" ${p.venditore==='Ricky'?'selected':''}>Ricky</option>
+                </select>
+            </td>
             <td contenteditable="true" onblur="modifica(${index},'prezzo_vendita',this.innerText)">${p.prezzo_vendita || ""}</td>
             <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive || ""}</td>
         `;
@@ -47,9 +71,10 @@ function modifica(index, campo, valore){
     } else {
         prodotti[index][campo] = valore;
     }
+    salvaLocalStorage();
 }
 
-// Aggiungi nuovo prodotto
+// Aggiungi nuovo prodotto con form
 function aggiungiProdotto(){
     let nome = prompt("Nome prodotto:");
     if(!nome) return;
@@ -58,10 +83,12 @@ function aggiungiProdotto(){
     let margine = Number(prompt("Margine stimato:"));
     let prezzo_vendita = prompt("Prezzo di vendita (opzionale):");
     prezzo_vendita = prezzo_vendita ? Number(prezzo_vendita) : null;
-    let venditore = ""; // lascia vuoto, verrà assegnato
+    let venditore = prompt("Venditore (Romeo/Ricky, opzionale):","");
+    venditore = (venditore === "Romeo" || venditore === "Ricky") ? venditore : "";
     let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
     prodotti.push({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita, vendite_effettive:0});
     mostraTabella();
+    salvaLocalStorage();
 }
 
 // Riequilibrio automatico venditori
@@ -70,7 +97,6 @@ function riequilibra(){
 
     prodotti.forEach(p=>{
         let profitto = p.prezzo_vendita - p.prezzo_acquisto;
-        // Se venditore non assegnato, lo assegna chi ha meno guadagni stimati
         if(!p.venditore){
             if(guadagni.Romeo <= guadagni.Ricky){
                 p.venditore = "Romeo";
@@ -80,12 +106,12 @@ function riequilibra(){
                 guadagni.Ricky += profitto;
             }
         } else {
-            // Se già assegnato, aggiorna guadagni stimati
             guadagni[p.venditore] += profitto;
         }
     });
 
     mostraTabella();
+    salvaLocalStorage();
 }
 
 // Esporta CSV aggiornato
@@ -100,3 +126,10 @@ function esportaCSV(){
     URL.revokeObjectURL(url);
 }
 
+    }
+}
+
+// Caricamento automatico all’apertura
+window.onload = function(){
+    caricaLocalStorage();
+};
