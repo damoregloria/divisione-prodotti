@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            background: linear-gradient(135deg, #d0f0fd, #d0fdea);
             color: #333;
             margin: 0;
             padding: 0;
@@ -18,7 +18,7 @@
         }
 
         #mainDiv {
-            background: #fff;
+            background: #ffffff;
             border-radius: 20px;
             padding: 30px;
             margin-top: 50px;
@@ -29,50 +29,18 @@
 
         h1 {
             text-align: center;
-            color: #34495e;
+            color: #0b3d91;
             font-weight: 700;
             margin-bottom: 30px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 10px;
-            margin-top: 20px;
-        }
-
-        th {
-            background-color: #6c5ce7;
-            color: #fff;
-            font-weight: 600;
-            padding: 12px;
-            border-radius: 10px 10px 0 0;
-        }
-
-        td {
-            background-color: #f8f9fa;
-            padding: 10px;
-            text-align: left;
-            border-radius: 8px;
-        }
-
-        tr:hover td {
-            background-color: #e0e5ec;
-        }
-
-        td select {
-            padding: 5px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-
         button {
-            background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+            background: linear-gradient(90deg, #1abc9c, #16a085);
             color: #fff;
             border: none;
             padding: 12px 25px;
             margin: 5px;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
@@ -83,10 +51,42 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            margin-top: 20px;
+        }
+
+        th {
+            background-color: #1abc9c;
+            color: #fff;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        td {
+            background-color: #eafaf1;
+            padding: 10px;
+            text-align: left;
+            border-radius: 6px;
+        }
+
+        tr:hover td {
+            background-color: #d0f5e0;
+        }
+
+        td select {
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
         #guadagniDiv {
             margin-top: 20px;
             padding: 15px 20px;
-            background: linear-gradient(135deg, #74b9ff, #a29bfe);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
             border-radius: 15px;
             color: #fff;
             display: flex;
@@ -109,28 +109,35 @@
             border: 1px solid #ccc;
             flex: 1 1 150px;
         }
+
+        #loginDiv {
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        #loginDiv input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
-    <div id="mainDiv">
+    <div id="loginDiv">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Entra</button>
+    </div>
+
+    <div id="mainDiv" style="display:none;">
         <h1>Gestione Prodotti</h1>
 
-        <!-- Form per aggiungere prodotto -->
-        <form id="formProdotto" onsubmit="aggiungiProdottoForm(event)">
-            <input type="text" id="nome" placeholder="Nome prodotto" required>
-            <input type="text" id="categoria" placeholder="Categoria" required>
-            <input type="number" id="prezzo_acquisto" placeholder="Prezzo acquisto" min="0" required>
-            <input type="number" id="margine" placeholder="Margine" min="0" required>
-            <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita (opzionale)" min="0">
-            <select id="venditore">
-                <option value="">Venditore</option>
-                <option value="Romeo">Romeo</option>
-                <option value="Ricky">Ricky</option>
-            </select>
-            <button type="submit">Aggiungi prodotto</button>
-        </form>
+        <div>
+            <button onclick="mostraForm()">Aggiungi prodotto</button>
+            <button onclick="riequilibra()">Assegna venditori automaticamente</button>
+        </div>
 
-        <button onclick="riequilibra()">Assegna venditori automaticamente</button>
+        <div id="formContainer"></div>
 
         <div id="guadagniDiv">
             <p>Romeo: <span id="guadRomeo">0</span> €</p>
