@@ -15,10 +15,14 @@
     </div>
 
     <div id="mainDiv" style="display:none;">
-        <input type="file" id="csvFile" />
-        <button onclick="riequilibra()">Assegna venditori automaticamente</button>
+        <!-- Rimuoviamo caricamento CSV e esportazione -->
         <button onclick="aggiungiProdotto()">Aggiungi prodotto</button>
-        <button onclick="esportaCSV()">Esporta CSV</button>
+        <button onclick="riequilibra()">Assegna venditori automaticamente</button>
+
+        <div id="guadagniDiv">
+            <p>Romeo: <span id="guadRomeo">0</span> €</p>
+            <p>Ricky: <span id="guadRicky">0</span> €</p>
+        </div>
 
         <table id="tabella" border="1"></table>
     </div>
