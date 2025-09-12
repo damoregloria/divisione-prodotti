@@ -17,7 +17,7 @@ function caricaLocalStorage() {
 // Login password
 function login(){
     const pwd = document.getElementById("password").value;
-    if(pwd === "1234"){  // password esempio
+    if(pwd === "1234"){
         document.getElementById("loginDiv").style.display="none";
         document.getElementById("mainDiv").style.display="block";
         caricaLocalStorage();
@@ -26,13 +26,18 @@ function login(){
     }
 }
 
-// Mostra tabella + guadagni (senza card)
+// Mostra tabella
 function mostraTabella(){
     let table = document.getElementById("tabella");
     table.innerHTML = `
         <tr>
-            <th>Nome</th><th>Categoria</th><th>Prezzo Acquisto</th><th>Margine</th>
-            <th>Venditore</th><th>Prezzo Vendita</th><th>Vendite Effettive</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Prezzo Acquisto</th>
+            <th>Margine</th>
+            <th>Venditore</th>
+            <th>Prezzo Vendita</th>
+            <th>Vendite Effettive</th>
         </tr>
     `;
 
@@ -50,16 +55,23 @@ function mostraTabella(){
             <td contenteditable="true" onblur="modifica(${index},'nome',this.innerText)">${p.nome}</td>
             <td>
                 <select onchange="modifica(${index},'categoria',this.value)">
+                    <option value="">--</option>
                     <option value="Scarpe" ${p.categoria==='Scarpe'?'selected':''}>Scarpe</option>
                     <option value="Abbigliamento" ${p.categoria==='Abbigliamento'?'selected':''}>Abbigliamento</option>
                     <option value="Accessori" ${p.categoria==='Accessori'?'selected':''}>Accessori</option>
                     <option value="Altro" ${p.categoria==='Altro'?'selected':''}>Altro</option>
                 </select>
             </td>
-            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${p.prezzo_acquisto}</td>
-            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${p.margine}</td>
-            <td contenteditable="true" onblur="modifica(${index},'venditore',this.innerText)">${p.venditore || ''}</td>
-            <td contenteditable="true" onblur="modifica(${index},'prezzo_vendita',this.innerText)">${p.prezzo_vendita || ""}</td>
+            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${p.prezzo_acquisto} €</td>
+            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${p.margine} €</td>
+            <td>
+                <select onchange="modifica(${index},'venditore',this.value)">
+                    <option value="">--</option>
+                    <option value="Romeo" ${p.venditore==='Romeo'?'selected':''}>Romeo</option>
+                    <option value="Ricky" ${p.venditore==='Ricky'?'selected':''}>Ricky</option>
+                </select>
+            </td>
+            <td contenteditable="true" onblur="modifica(${index},'prezzo_vendita',this.innerText)">${p.prezzo_vendita ? p.prezzo_vendita+' €' : ''}</td>
             <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive || ""}</td>
         `;
     });
@@ -68,7 +80,7 @@ function mostraTabella(){
 // Modifica tabella
 function modifica(index, campo, valore){
     if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
-        let num = Number(valore);
+        let num = Number(valore.replace('€','').trim());
         if(num < 0){ alert("Valore non può essere negativo!"); mostraTabella(); return; }
         prodotti[index][campo] = num;
     } else {
@@ -84,6 +96,7 @@ function mostraForm(){
         <form id="formProdotto" onsubmit="aggiungiProdottoForm(event)">
             <input type="text" id="nome" placeholder="Nome prodotto" required>
             <select id="categoria" required>
+                <option value="">--</option>
                 <option value="Scarpe">Scarpe</option>
                 <option value="Abbigliamento">Abbigliamento</option>
                 <option value="Accessori">Accessori</option>
@@ -92,13 +105,17 @@ function mostraForm(){
             <input type="number" id="prezzo_acquisto" placeholder="Prezzo acquisto" min="0" required>
             <input type="number" id="margine" placeholder="Margine" min="0" required>
             <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita (opzionale)" min="0">
-            <input type="text" id="venditore" placeholder="Venditore">
+            <select id="venditore">
+                <option value="">--</option>
+                <option value="Romeo">Romeo</option>
+                <option value="Ricky">Ricky</option>
+            </select>
             <button type="submit">Aggiungi</button>
         </form>
     `;
 }
 
-// Aggiungi prodotto dal form
+// Aggiungi prodotto dal form (all’inizio)
 function aggiungiProdottoForm(event){
     event.preventDefault();
     let nome = document.getElementById("nome").value;
@@ -112,14 +129,14 @@ function aggiungiProdottoForm(event){
     if(prezzo_acquisto<0 || margine<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ alert("Valori non validi"); return; }
 
     let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
-    prodotti.push({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita,vendite_effettive:0});
+    prodotti.unshift({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita,vendite_effettive:0});
 
     document.getElementById("formContainer").innerHTML = "";
     mostraTabella();
     salvaLocalStorage();
 }
 
-// Riequilibrio automatico (senza carte guadagni)
+// Riequilibrio automatico
 function riequilibra(){
     prodottiRiequilibrati.clear();
     prodotti.forEach(p=>{
