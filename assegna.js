@@ -1,12 +1,12 @@
 let prodotti = [];
-let prodottiRiequilibrati = new Set(); // tiene traccia dei prodotti assegnati automaticamente
+let prodottiRiequilibrati = new Set(); // prodotti assegnati automaticamente
 
-// Funzione per salvare dati su localStorage
+// Salvataggio su localStorage
 function salvaLocalStorage() {
     localStorage.setItem("prodotti", JSON.stringify(prodotti));
 }
 
-// Funzione per caricare dati da localStorage
+// Caricamento dati persistenti
 function caricaLocalStorage() {
     let dati = localStorage.getItem("prodotti");
     if(dati){
@@ -17,22 +17,6 @@ function caricaLocalStorage() {
     return false;
 }
 
-// Caricamento CSV (solo se localStorage vuoto)
-document.getElementById('csvFile').addEventListener('change', function(e){
-    if(caricaLocalStorage()) return;
-
-    let file = e.target.files[0];
-    Papa.parse(file, {
-        header: true,
-        dynamicTyping: true,
-        complete: function(results) {
-            prodotti = results.data;
-            mostraTabella();
-            salvaLocalStorage();
-        }
-    });
-});
-
 // Mostra tabella interattiva
 function mostraTabella(){
     let table = document.getElementById("tabella");
@@ -42,13 +26,20 @@ function mostraTabella(){
             <th>Venditore</th><th>Prezzo Vendita</th><th>Vendite Effettive</th>
         </tr>
     `;
+
+    let guadagni = { Romeo: 0, Ricky: 0 };
+
     prodotti.forEach((p,index)=>{
-        // Calcolo automatico prezzo vendita se mancante
         if(!p.prezzo_vendita && p.margine){
             p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
         }
 
-        let bgColor = prodottiRiequilibrati.has(p.id) ? "#d4f7d4" : ""; // evidenza verde chiaro
+        // Calcolo guadagni stimati
+        if(p.venditore && p.prezzo_vendita !== undefined && p.prezzo_acquisto !== undefined){
+            guadagni[p.venditore] += (p.prezzo_vendita - p.prezzo_acquisto);
+        }
+
+        let bgColor = prodottiRiequilibrati.has(p.id) ? "#d4f7d4" : "";
 
         let row = table.insertRow();
         row.style.backgroundColor = bgColor;
@@ -69,9 +60,12 @@ function mostraTabella(){
             <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive || ""}</td>
         `;
     });
+
+    document.getElementById("guadRomeo").innerText = guadagni.Romeo.toFixed(2);
+    document.getElementById("guadRicky").innerText = guadagni.Ricky.toFixed(2);
 }
 
-// Modifica valore tabella con validazione
+// Modifica tabella con validazione
 function modifica(index, campo, valore){
     if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
         let num = Number(valore);
@@ -87,7 +81,7 @@ function modifica(index, campo, valore){
     salvaLocalStorage();
 }
 
-// Aggiungi nuovo prodotto
+// Aggiungi prodotto manualmente
 function aggiungiProdotto(){
     let nome = prompt("Nome prodotto:");
     if(!nome) return;
@@ -122,7 +116,7 @@ function riequilibra(){
                 p.venditore = "Ricky";
                 guadagni.Ricky += profitto;
             }
-            prodottiRiequilibrati.add(p.id); // segna come appena assegnato
+            prodottiRiequilibrati.add(p.id);
         } else {
             guadagni[p.venditore] += profitto;
         }
@@ -130,18 +124,6 @@ function riequilibra(){
 
     mostraTabella();
     salvaLocalStorage();
-}
-
-// Esporta CSV aggiornato
-function esportaCSV(){
-    let csv = Papa.unparse(prodotti);
-    let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement('a');
-    a.href = url;
-    a.download = "prodotti_aggiornati.csv";
-    a.click();
-    URL.revokeObjectURL(url);
 }
 
 // Caricamento automatico all’apertura
