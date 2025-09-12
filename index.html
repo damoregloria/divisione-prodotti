@@ -2,8 +2,74 @@
 <html>
 <head>
     <title>Gestione Prodotti</title>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <!-- Font moderno -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <script src="assegna.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #guadagniDiv {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #eaf2f8;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        #guadagniDiv p {
+            margin: 5px 0;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
     <h1>Gestione Prodotti</h1>
@@ -15,7 +81,6 @@
     </div>
 
     <div id="mainDiv" style="display:none;">
-        <!-- Rimuoviamo caricamento CSV e esportazione -->
         <button onclick="aggiungiProdotto()">Aggiungi prodotto</button>
         <button onclick="riequilibra()">Assegna venditori automaticamente</button>
 
