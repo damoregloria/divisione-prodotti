@@ -1,4 +1,5 @@
 let prodotti = [];
+let prodottiRiequilibrati = new Set(); // tiene traccia dei prodotti assegnati automaticamente
 
 // Funzione per salvare dati su localStorage
 function salvaLocalStorage() {
@@ -16,9 +17,9 @@ function caricaLocalStorage() {
     return false;
 }
 
-// Caricamento CSV (solo se localStorage è vuoto)
+// Caricamento CSV (solo se localStorage vuoto)
 document.getElementById('csvFile').addEventListener('change', function(e){
-    if(caricaLocalStorage()) return; // già presente nel localStorage
+    if(caricaLocalStorage()) return;
 
     let file = e.target.files[0];
     Papa.parse(file, {
@@ -42,10 +43,16 @@ function mostraTabella(){
         </tr>
     `;
     prodotti.forEach((p,index)=>{
+        // Calcolo automatico prezzo vendita se mancante
         if(!p.prezzo_vendita && p.margine){
             p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
         }
+
+        let bgColor = prodottiRiequilibrati.has(p.id) ? "#d4f7d4" : ""; // evidenza verde chiaro
+
         let row = table.insertRow();
+        row.style.backgroundColor = bgColor;
+
         row.innerHTML = `
             <td contenteditable="true" onblur="modifica(${index},'nome',this.innerText)">${p.nome}</td>
             <td contenteditable="true" onblur="modifica(${index},'categoria',this.innerText)">${p.categoria}</td>
@@ -64,25 +71,34 @@ function mostraTabella(){
     });
 }
 
-// Modifica valore tabella
+// Modifica valore tabella con validazione
 function modifica(index, campo, valore){
     if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
-        prodotti[index][campo] = Number(valore);
+        let num = Number(valore);
+        if(num < 0){
+            alert("Valore non può essere negativo!");
+            mostraTabella();
+            return;
+        }
+        prodotti[index][campo] = num;
     } else {
         prodotti[index][campo] = valore;
     }
     salvaLocalStorage();
 }
 
-// Aggiungi nuovo prodotto con form
+// Aggiungi nuovo prodotto
 function aggiungiProdotto(){
     let nome = prompt("Nome prodotto:");
     if(!nome) return;
     let categoria = prompt("Categoria:");
     let prezzo_acquisto = Number(prompt("Prezzo d'acquisto:"));
+    if(prezzo_acquisto < 0) { alert("Prezzo non può essere negativo"); return; }
     let margine = Number(prompt("Margine stimato:"));
+    if(margine < 0) { alert("Margine non può essere negativo"); return; }
     let prezzo_vendita = prompt("Prezzo di vendita (opzionale):");
     prezzo_vendita = prezzo_vendita ? Number(prezzo_vendita) : null;
+    if(prezzo_vendita !== null && prezzo_vendita < 0){ alert("Prezzo vendita non può essere negativo"); return; }
     let venditore = prompt("Venditore (Romeo/Ricky, opzionale):","");
     venditore = (venditore === "Romeo" || venditore === "Ricky") ? venditore : "";
     let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
@@ -91,9 +107,10 @@ function aggiungiProdotto(){
     salvaLocalStorage();
 }
 
-// Riequilibrio automatico venditori
+// Riequilibrio automatico venditori con evidenza
 function riequilibra(){
     let guadagni = { Romeo: 0, Ricky: 0 };
+    prodottiRiequilibrati.clear();
 
     prodotti.forEach(p=>{
         let profitto = p.prezzo_vendita - p.prezzo_acquisto;
@@ -105,6 +122,7 @@ function riequilibra(){
                 p.venditore = "Ricky";
                 guadagni.Ricky += profitto;
             }
+            prodottiRiequilibrati.add(p.id); // segna come appena assegnato
         } else {
             guadagni[p.venditore] += profitto;
         }
@@ -124,9 +142,6 @@ function esportaCSV(){
     a.download = "prodotti_aggiornati.csv";
     a.click();
     URL.revokeObjectURL(url);
-}
-
-    }
 }
 
 // Caricamento automatico all’apertura
