@@ -1,1 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestione Prodotti</title>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="assegna.js"></script>
+</head>
+<body>
+    <h1>Gestione Prodotti</h1>
+
+    <!-- Login semplice -->
+    <div id="loginDiv">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Entra</button>
+    </div>
+
+    <div id="mainDiv" style="display:none;">
+        <input type="file" id="csvFile" />
+        <button onclick="riequilibra()">Assegna venditori automaticamente</button>
+        <button onclick="aggiungiProdotto()">Aggiungi prodotto</button>
+        <button onclick="esportaCSV()">Esporta CSV</button>
+
+        <table id="tabella" border="1"></table>
+    </div>
+
+    <script>
+        function login(){
+            const pwd = document.getElementById("password").value;
+            if(pwd === "1234"){  // password esempio per prototipo
+                document.getElementById("loginDiv").style.display="none";
+                document.getElementById("mainDiv").style.display="block";
+            } else {
+                alert("Password errata!");
+            }
+        }
+    </script>
+</body>
+</html>
 
