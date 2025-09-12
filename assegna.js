@@ -14,6 +14,18 @@ function caricaLocalStorage() {
     }
 }
 
+// Login password
+function login(){
+    const pwd = document.getElementById("password").value;
+    if(pwd === "1234"){  // password esempio
+        document.getElementById("loginDiv").style.display="none";
+        document.getElementById("mainDiv").style.display="block";
+        caricaLocalStorage();
+    } else {
+        alert("Password errata!");
+    }
+}
+
 // Mostra tabella + guadagni
 function mostraTabella(){
     let table = document.getElementById("tabella");
@@ -61,7 +73,7 @@ function mostraTabella(){
     document.getElementById("guadRicky").innerText = guadagni.Ricky.toFixed(2);
 }
 
-// Modifica tabella con validazione
+// Modifica tabella
 function modifica(index, campo, valore){
     if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
         let num = Number(valore);
@@ -71,6 +83,26 @@ function modifica(index, campo, valore){
         prodotti[index][campo] = valore;
     }
     salvaLocalStorage();
+}
+
+// Mostra form per aggiungere prodotto
+function mostraForm(){
+    const container = document.getElementById("formContainer");
+    container.innerHTML = `
+        <form id="formProdotto" onsubmit="aggiungiProdottoForm(event)">
+            <input type="text" id="nome" placeholder="Nome prodotto" required>
+            <input type="text" id="categoria" placeholder="Categoria" required>
+            <input type="number" id="prezzo_acquisto" placeholder="Prezzo acquisto" min="0" required>
+            <input type="number" id="margine" placeholder="Margine" min="0" required>
+            <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita (opzionale)" min="0">
+            <select id="venditore">
+                <option value="">Venditore</option>
+                <option value="Romeo">Romeo</option>
+                <option value="Ricky">Ricky</option>
+            </select>
+            <button type="submit">Aggiungi</button>
+        </form>
+    `;
 }
 
 // Aggiungi prodotto dal form
@@ -90,7 +122,7 @@ function aggiungiProdottoForm(event){
     let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
     prodotti.push({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita,vendite_effettive:0});
 
-    document.getElementById("formProdotto").reset();
+    document.getElementById("formContainer").innerHTML = "";
     mostraTabella();
     salvaLocalStorage();
 }
@@ -113,4 +145,4 @@ function riequilibra(){
     salvaLocalStorage();
 }
 
-window.onload = function(){ caricaLocalStorage(); };
+window.onload = function(){ };
