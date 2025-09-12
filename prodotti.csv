@@ -1,0 +1,5 @@
+id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita,vendite_effettive
+1,Prodotto A,Accessori,10,5,,,
+2,Prodotto B,Scarpe,20,8,,,
+3,Prodotto C,Scarpe,15,7,,,
+4,Prodotto D,Scarpe,25,12,,,
