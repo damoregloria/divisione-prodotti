@@ -26,7 +26,7 @@ function login(){
     }
 }
 
-// Mostra tabella + guadagni
+// Mostra tabella + guadagni (senza card)
 function mostraTabella(){
     let table = document.getElementById("tabella");
     table.innerHTML = `
@@ -36,15 +36,9 @@ function mostraTabella(){
         </tr>
     `;
 
-    let guadagni = { Romeo: 0, Ricky: 0 };
-
     prodotti.forEach((p,index)=>{
         if(!p.prezzo_vendita && p.margine){
             p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
-        }
-
-        if(p.venditore && p.prezzo_vendita !== undefined && p.prezzo_acquisto !== undefined){
-            guadagni[p.venditore] += (p.prezzo_vendita - p.prezzo_acquisto);
         }
 
         let bgColor = prodottiRiequilibrati.has(p.id) ? "#d4f7d4" : "";
@@ -54,23 +48,21 @@ function mostraTabella(){
 
         row.innerHTML = `
             <td contenteditable="true" onblur="modifica(${index},'nome',this.innerText)">${p.nome}</td>
-            <td contenteditable="true" onblur="modifica(${index},'categoria',this.innerText)">${p.categoria}</td>
-            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${p.prezzo_acquisto}</td>
-            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${p.margine}</td>
             <td>
-                <select onchange="modifica(${index},'venditore',this.value)">
-                    <option value="">--</option>
-                    <option value="Romeo" ${p.venditore==='Romeo'?'selected':''}>Romeo</option>
-                    <option value="Ricky" ${p.venditore==='Ricky'?'selected':''}>Ricky</option>
+                <select onchange="modifica(${index},'categoria',this.value)">
+                    <option value="Scarpe" ${p.categoria==='Scarpe'?'selected':''}>Scarpe</option>
+                    <option value="Abbigliamento" ${p.categoria==='Abbigliamento'?'selected':''}>Abbigliamento</option>
+                    <option value="Accessori" ${p.categoria==='Accessori'?'selected':''}>Accessori</option>
+                    <option value="Altro" ${p.categoria==='Altro'?'selected':''}>Altro</option>
                 </select>
             </td>
+            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${p.prezzo_acquisto}</td>
+            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${p.margine}</td>
+            <td contenteditable="true" onblur="modifica(${index},'venditore',this.innerText)">${p.venditore || ''}</td>
             <td contenteditable="true" onblur="modifica(${index},'prezzo_vendita',this.innerText)">${p.prezzo_vendita || ""}</td>
             <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive || ""}</td>
         `;
     });
-
-    document.getElementById("guadRomeo").innerText = guadagni.Romeo.toFixed(2);
-    document.getElementById("guadRicky").innerText = guadagni.Ricky.toFixed(2);
 }
 
 // Modifica tabella
@@ -91,15 +83,16 @@ function mostraForm(){
     container.innerHTML = `
         <form id="formProdotto" onsubmit="aggiungiProdottoForm(event)">
             <input type="text" id="nome" placeholder="Nome prodotto" required>
-            <input type="text" id="categoria" placeholder="Categoria" required>
+            <select id="categoria" required>
+                <option value="Scarpe">Scarpe</option>
+                <option value="Abbigliamento">Abbigliamento</option>
+                <option value="Accessori">Accessori</option>
+                <option value="Altro">Altro</option>
+            </select>
             <input type="number" id="prezzo_acquisto" placeholder="Prezzo acquisto" min="0" required>
             <input type="number" id="margine" placeholder="Margine" min="0" required>
             <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita (opzionale)" min="0">
-            <select id="venditore">
-                <option value="">Venditore</option>
-                <option value="Romeo">Romeo</option>
-                <option value="Ricky">Ricky</option>
-            </select>
+            <input type="text" id="venditore" placeholder="Venditore">
             <button type="submit">Aggiungi</button>
         </form>
     `;
@@ -114,8 +107,7 @@ function aggiungiProdottoForm(event){
     let margine = Number(document.getElementById("margine").value);
     let prezzo_venditaInput = document.getElementById("prezzo_vendita").value;
     let prezzo_vendita = prezzo_venditaInput ? Number(prezzo_venditaInput) : null;
-    let venditoreInput = document.getElementById("venditore").value;
-    let venditore = (venditoreInput==="Romeo"||venditoreInput==="Ricky")?venditoreInput:"";
+    let venditore = document.getElementById("venditore").value;
 
     if(prezzo_acquisto<0 || margine<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ alert("Valori non validi"); return; }
 
@@ -127,20 +119,12 @@ function aggiungiProdottoForm(event){
     salvaLocalStorage();
 }
 
-// Riequilibrio automatico
+// Riequilibrio automatico (senza carte guadagni)
 function riequilibra(){
-    let guadagni = { Romeo:0, Ricky:0 };
     prodottiRiequilibrati.clear();
-
     prodotti.forEach(p=>{
-        let profitto = p.prezzo_vendita - p.prezzo_acquisto;
-        if(!p.venditore){
-            if(guadagni.Romeo <= guadagni.Ricky){ p.venditore="Romeo"; guadagni.Romeo+=profitto; }
-            else { p.venditore="Ricky"; guadagni.Ricky+=profitto; }
-            prodottiRiequilibrati.add(p.id);
-        } else { guadagni[p.venditore]+=profitto; }
+        if(!p.venditore){ prodottiRiequilibrati.add(p.id); }
     });
-
     mostraTabella();
     salvaLocalStorage();
 }
