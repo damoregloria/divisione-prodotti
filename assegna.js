@@ -1,23 +1,20 @@
 let prodotti = [];
-let prodottiRiequilibrati = new Set(); // prodotti assegnati automaticamente
+let prodottiRiequilibrati = new Set();
 
-// Salvataggio su localStorage
+// Persistenza
 function salvaLocalStorage() {
     localStorage.setItem("prodotti", JSON.stringify(prodotti));
 }
 
-// Caricamento dati persistenti
 function caricaLocalStorage() {
     let dati = localStorage.getItem("prodotti");
     if(dati){
         prodotti = JSON.parse(dati);
         mostraTabella();
-        return true;
     }
-    return false;
 }
 
-// Mostra tabella interattiva e aggiorna guadagni
+// Mostra tabella + guadagni
 function mostraTabella(){
     let table = document.getElementById("tabella");
     table.innerHTML = `
@@ -34,7 +31,6 @@ function mostraTabella(){
             p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
         }
 
-        // Calcolo guadagni stimati
         if(p.venditore && p.prezzo_vendita !== undefined && p.prezzo_acquisto !== undefined){
             guadagni[p.venditore] += (p.prezzo_vendita - p.prezzo_acquisto);
         }
@@ -69,11 +65,7 @@ function mostraTabella(){
 function modifica(index, campo, valore){
     if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
         let num = Number(valore);
-        if(num < 0){
-            alert("Valore non può essere negativo!");
-            mostraTabella();
-            return;
-        }
+        if(num < 0){ alert("Valore non può essere negativo!"); mostraTabella(); return; }
         prodotti[index][campo] = num;
     } else {
         prodotti[index][campo] = valore;
@@ -81,52 +73,44 @@ function modifica(index, campo, valore){
     salvaLocalStorage();
 }
 
-// Aggiungi prodotto manualmente
-function aggiungiProdotto(){
-    let nome = prompt("Nome prodotto:");
-    if(!nome) return;
-    let categoria = prompt("Categoria:");
-    let prezzo_acquisto = Number(prompt("Prezzo d'acquisto:"));
-    if(prezzo_acquisto < 0) { alert("Prezzo non può essere negativo"); return; }
-    let margine = Number(prompt("Margine stimato:"));
-    if(margine < 0) { alert("Margine non può essere negativo"); return; }
-    let prezzo_vendita = prompt("Prezzo di vendita (opzionale):");
-    prezzo_vendita = prezzo_vendita ? Number(prezzo_vendita) : null;
-    if(prezzo_vendita !== null && prezzo_vendita < 0){ alert("Prezzo vendita non può essere negativo"); return; }
-    let venditore = prompt("Venditore (Romeo/Ricky, opzionale):","");
-    venditore = (venditore === "Romeo" || venditore === "Ricky") ? venditore : "";
+// Aggiungi prodotto dal form
+function aggiungiProdottoForm(event){
+    event.preventDefault();
+    let nome = document.getElementById("nome").value;
+    let categoria = document.getElementById("categoria").value;
+    let prezzo_acquisto = Number(document.getElementById("prezzo_acquisto").value);
+    let margine = Number(document.getElementById("margine").value);
+    let prezzo_venditaInput = document.getElementById("prezzo_vendita").value;
+    let prezzo_vendita = prezzo_venditaInput ? Number(prezzo_venditaInput) : null;
+    let venditoreInput = document.getElementById("venditore").value;
+    let venditore = (venditoreInput==="Romeo"||venditoreInput==="Ricky")?venditoreInput:"";
+
+    if(prezzo_acquisto<0 || margine<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ alert("Valori non validi"); return; }
+
     let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
-    prodotti.push({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita, vendite_effettive:0});
+    prodotti.push({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita,vendite_effettive:0});
+
+    document.getElementById("formProdotto").reset();
     mostraTabella();
     salvaLocalStorage();
 }
 
-// Riequilibrio automatico venditori con evidenza
+// Riequilibrio automatico
 function riequilibra(){
-    let guadagni = { Romeo: 0, Ricky: 0 };
+    let guadagni = { Romeo:0, Ricky:0 };
     prodottiRiequilibrati.clear();
 
     prodotti.forEach(p=>{
         let profitto = p.prezzo_vendita - p.prezzo_acquisto;
         if(!p.venditore){
-            if(guadagni.Romeo <= guadagni.Ricky){
-                p.venditore = "Romeo";
-                guadagni.Romeo += profitto;
-            } else {
-                p.venditore = "Ricky";
-                guadagni.Ricky += profitto;
-            }
+            if(guadagni.Romeo <= guadagni.Ricky){ p.venditore="Romeo"; guadagni.Romeo+=profitto; }
+            else { p.venditore="Ricky"; guadagni.Ricky+=profitto; }
             prodottiRiequilibrati.add(p.id);
-        } else {
-            guadagni[p.venditore] += profitto;
-        }
+        } else { guadagni[p.venditore]+=profitto; }
     });
 
     mostraTabella();
     salvaLocalStorage();
 }
 
-// Caricamento automatico all’apertura
-window.onload = function(){
-    caricaLocalStorage();
-};
+window.onload = function(){ caricaLocalStorage(); };
