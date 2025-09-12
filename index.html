@@ -1,126 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestione Prodotti</title>
+    <title>Dashboard Prodotti</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <script src="assegna.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #d0f0fd, #d0fdea);
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            align-items: flex-start;
+            background: linear-gradient(135deg, #d0f5ea, #e0f7fd);
+            margin:0;
+            padding:0;
+            display:flex;
+            justify-content:center;
+            align-items:flex-start;
+            min-height:100vh;
+        }
+
+        #loginDiv {
+            text-align:center;
+            margin-top:100px;
+        }
+
+        #loginDiv input {
+            padding:10px;
+            border-radius:8px;
+            border:1px solid #ccc;
+            margin-right:5px;
         }
 
         #mainDiv {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 30px;
-            margin-top: 50px;
-            width: 90%;
-            max-width: 1000px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display:none;
+            background:#ffffff;
+            border-radius:20px;
+            padding:30px;
+            margin-top:50px;
+            width:90%;
+            max-width:1000px;
+            box-shadow:0 10px 25px rgba(0,0,0,0.1);
         }
 
         h1 {
-            text-align: center;
-            color: #0b3d91;
-            font-weight: 700;
-            margin-bottom: 30px;
+            text-align:center;
+            color:#0b3d91;
+            font-weight:700;
+            margin-bottom:30px;
         }
 
         button {
             background: linear-gradient(90deg, #1abc9c, #16a085);
-            color: #fff;
-            border: none;
-            padding: 12px 25px;
-            margin: 5px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
+            color:#fff;
+            border:none;
+            padding:12px 25px;
+            margin:5px;
+            border-radius:15px;
+            cursor:pointer;
+            font-weight:600;
             transition: all 0.3s ease;
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow:0 5px 15px rgba(0,0,0,0.2);
         }
 
         table {
-            width: 100%;
+            width:100%;
             border-collapse: separate;
-            border-spacing: 0 8px;
-            margin-top: 20px;
+            border-spacing:0 8px;
+            margin-top:20px;
         }
 
         th {
-            background-color: #1abc9c;
-            color: #fff;
-            font-weight: 600;
-            padding: 12px;
-            border-radius: 8px 8px 0 0;
+            background-color:#1abc9c;
+            color:#fff;
+            font-weight:600;
+            padding:12px;
+            border-radius:8px 8px 0 0;
         }
 
         td {
-            background-color: #eafaf1;
-            padding: 10px;
-            text-align: left;
-            border-radius: 6px;
+            background-color:#eafaf1;
+            padding:10px;
+            text-align:left;
+            border-radius:6px;
         }
 
         tr:hover td {
-            background-color: #d0f5e0;
+            background-color:#d0f5e0;
         }
 
         td select {
-            padding: 5px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+            padding:5px;
+            border-radius:6px;
+            border:1px solid #ccc;
         }
 
-        #guadagniDiv {
-            margin-top: 20px;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            border-radius: 15px;
-            color: #fff;
-            display: flex;
-            justify-content: space-around;
-            font-weight: 600;
-            font-size: 16px;
+        #guadagniCards {
+            display:flex;
+            gap:20px;
+            justify-content:center;
+            margin-bottom:20px;
         }
 
-        #formProdotto {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-            align-items: flex-end;
+        .card {
+            background:#2ecc71;
+            color:#fff;
+            padding:20px;
+            border-radius:15px;
+            box-shadow:0 5px 15px rgba(0,0,0,0.1);
+            text-align:center;
+            flex:1;
         }
 
-        #formProdotto input, #formProdotto select {
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            flex: 1 1 150px;
-        }
-
-        #loginDiv {
-            text-align: center;
-            margin-top: 100px;
-        }
-
-        #loginDiv input {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            margin-right: 5px;
-        }
+        .card.ricky { background:#3498db; }
     </style>
 </head>
 <body>
@@ -129,20 +121,27 @@
         <button onclick="login()">Entra</button>
     </div>
 
-    <div id="mainDiv" style="display:none;">
-        <h1>Gestione Prodotti</h1>
+    <div id="mainDiv">
+        <h1>Dashboard Prodotti</h1>
+
+        <!-- Card guadagni -->
+        <div id="guadagniCards">
+            <div class="card">
+                <h3>Romeo</h3>
+                <p id="guadRomeo">0 €</p>
+            </div>
+            <div class="card ricky">
+                <h3>Ricky</h3>
+                <p id="guadRicky">0 €</p>
+            </div>
+        </div>
 
         <div>
             <button onclick="mostraForm()">Aggiungi prodotto</button>
             <button onclick="riequilibra()">Assegna venditori automaticamente</button>
         </div>
 
-        <div id="formContainer"></div>
-
-        <div id="guadagniDiv">
-            <p>Romeo: <span id="guadRomeo">0</span> €</p>
-            <p>Ricky: <span id="guadRicky">0</span> €</p>
-        </div>
+        <div id="formContainer" style="margin-top:20px;"></div>
 
         <table id="tabella"></table>
     </div>
