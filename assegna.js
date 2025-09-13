@@ -40,8 +40,8 @@ function mostraTabella(){
             <th>Nome</th>
             <th>Categoria</th>
             <th>Prezzo Acquisto</th>
-            <th>Venditore</th>
             <th>Prezzo Vendita Stimato</th>
+            <th>Venditore</th>
             <th>Prezzo Vendita Effettivo</th>
             <th>Azioni</th>
         </tr>
