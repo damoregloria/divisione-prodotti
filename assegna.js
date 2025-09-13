@@ -1,147 +1,141 @@
-let prodotti = JSON.parse(localStorage.getItem("prodotti")) || [];
+const PASSWORD = "admin123";
+let prodotti = [];
 let prodottiRiequilibrati = new Set();
-const PASSWORD = "ciao123";
 
-// ----------------- LOGIN -----------------
+// Controllo password
 function checkPassword(){
-  let pw = document.getElementById("passwordInput").value;
-  if(pw === PASSWORD){
-    document.getElementById("loginDiv").style.display = "none";
-    document.getElementById("mainDiv").style.display = "block";
-    mostraTabella();
-  } else {
-    alert("Password errata");
-  }
+    const input = document.getElementById("password").value;
+    if(input === PASSWORD){
+        document.getElementById("loginContainer").style.display = "none";
+        document.getElementById("appContainer").style.display = "block";
+        mostraTabella();
+    } else {
+        document.getElementById("errorMsg").style.display = "block";
+    }
 }
 
-// ----------------- FORMATTAZIONE -----------------
+// Formattazione euro
 function formatEuro(value){
-  if(isNaN(value) || value === null) return "€ 0,00";
-  return "€ " + Number(value).toFixed(2).replace('.',',');
+    if(isNaN(value) || value === null || value === undefined) return "";
+    return Number(value).toFixed(2).replace('.',',') + " €";
 }
 
-function parseNumero(val){
-  if(!val) return 0;
-  return Number(val.toString().replace(',','.'));
-}
-
-// ----------------- STORAGE -----------------
-function salvaLocalStorage(){
-  localStorage.setItem("prodotti", JSON.stringify(prodotti));
-}
-
-// ----------------- MOSTRA TABELLA -----------------
+// Mostra tabella prodotti
 function mostraTabella(){
-  let tbody = document.querySelector("#tabellaProdotti tbody");
-  tbody.innerHTML = "";
+    let tbody = document.querySelector("#tabellaProdotti tbody");
+    tbody.innerHTML = "";
 
-  prodotti.forEach((p,index)=>{
-    let row = document.createElement("tr");
-    if(prodottiRiequilibrati.has(p.id)) row.style.backgroundColor = "#f0fff0";
-
-    row.innerHTML = `
-      <td>${index+1}</td>
-      <td contenteditable onblur="aggiorna(${index},'nome',this.innerText)">${p.nome}</td>
-      <td>
-        <select onchange="aggiorna(${index},'categoria',this.value)">
-          <option ${p.categoria=="--"?"selected":""}>--</option>
-          <option ${p.categoria=="Scarpe"?"selected":""}>Scarpe</option>
-          <option ${p.categoria=="Abbigliamento"?"selected":""}>Abbigliamento</option>
-          <option ${p.categoria=="Accessori"?"selected":""}>Accessori</option>
-          <option ${p.categoria=="Altro"?"selected":""}>Altro</option>
-        </select>
-      </td>
-      <td contenteditable onblur="aggiorna(${index},'prezzo_acquisto',this.innerText)">${formatEuro(p.prezzo_acquisto)}</td>
-      <td>
-        <select onchange="aggiorna(${index},'venditore',this.value)">
-          <option ${p.venditore=="--"?"selected":""}>--</option>
-          <option ${p.venditore=="Romeo"?"selected":""}>Romeo</option>
-          <option ${p.venditore=="Ricky"?"selected":""}>Ricky</option>
-        </select>
-      </td>
-      <td contenteditable onblur="aggiorna(${index},'prezzo_vendita',this.innerText)">${formatEuro(p.prezzo_vendita)}</td>
-      <td contenteditable onblur="aggiorna(${index},'vendite_effettive',this.innerText)">${formatEuro(p.vendite_effettive)}</td>
-      <td><button onclick="eliminaProdotto(${index})">Elimina</button></td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  aggiornaRiepilogo();
+    prodotti.forEach((p, index) => {
+        let row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${index+1}</td>
+            <td contenteditable onblur="aggiornaProdotto(${index},'nome',this.innerText)">${p.nome}</td>
+            <td>
+                <select onchange="aggiornaProdotto(${index},'categoria',this.value)">
+                    <option ${p.categoria==="--"?"selected":""}>--</option>
+                    <option ${p.categoria==="Scarpe"?"selected":""}>Scarpe</option>
+                    <option ${p.categoria==="Abbigliamento"?"selected":""}>Abbigliamento</option>
+                    <option ${p.categoria==="Accessori"?"selected":""}>Accessori</option>
+                    <option ${p.categoria==="Altro"?"selected":""}>Altro</option>
+                </select>
+            </td>
+            <td contenteditable onblur="aggiornaProdotto(${index},'prezzo_acquisto',this.innerText)">${formatEuro(p.prezzo_acquisto)}</td>
+            <td>
+                <select onchange="aggiornaProdotto(${index},'venditore',this.value)">
+                    <option ${p.venditore==="--"?"selected":""}>--</option>
+                    <option ${p.venditore==="Romeo"?"selected":""}>Romeo</option>
+                    <option ${p.venditore==="Ricky"?"selected":""}>Ricky</option>
+                </select>
+            </td>
+            <td contenteditable onblur="aggiornaProdotto(${index},'prezzo_vendita',this.innerText)">${formatEuro(p.prezzo_vendita)}</td>
+            <td contenteditable onblur="aggiornaProdotto(${index},'vendite_effettive',this.innerText)">${formatEuro(p.vendite_effettive)}</td>
+            <td><button onclick="eliminaProdotto(${index})">Elimina</button></td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
-// ----------------- AGGIORNAMENTO CAMPI -----------------
-function aggiorna(index,campo,val){
-  if(campo==="prezzo_acquisto" || campo==="prezzo_vendita" || campo==="vendite_effettive"){
-    val = parseNumero(val);
-    if(val<0){ alert("Valore non valido"); return; }
-  }
+// Aggiorna valori
+function aggiornaProdotto(index, campo, valore){
+    if(campo==="prezzo_acquisto" || campo==="prezzo_vendita" || campo==="vendite_effettive"){
+        valore = valore.replace("€","").replace(",",".");
 
-  prodotti[index][campo] = val;
-
-  // Calcolo automatico prezzo stimato se non presente
-  if(campo==="prezzo_acquisto" && !prodotti[index].prezzo_vendita){
-    prodotti[index].prezzo_vendita = prodotti[index].prezzo_acquisto;
-  }
-
-  mostraTabella();
-  salvaLocalStorage();
-}
-
-// ----------------- FORM NUOVO PRODOTTO -----------------
-function mostraForm(){
-  let formContainer = document.getElementById("formContainer");
-  formContainer.innerHTML = `
-    <form onsubmit="aggiungiProdottoForm(event)">
-      <input type="text" id="nome" placeholder="Nome prodotto" required>
-      <select id="categoria">
-        <option>--</option>
-        <option>Scarpe</option>
-        <option>Abbigliamento</option>
-        <option>Accessori</option>
-        <option>Altro</option>
-      </select>
-      <input type="text" id="prezzo_acquisto" placeholder="Prezzo Acquisto (€)" required>
-      <input type="text" id="prezzo_vendita" placeholder="Prezzo Vendita Stimato (€)">
-      <select id="venditore">
-        <option>--</option>
-        <option>Romeo</option>
-        <option>Ricky</option>
-      </select>
-      <button type="submit">Aggiungi</button>
-    </form>
-  `;
-}
-
-function aggiungiProdottoForm(event){
-  event.preventDefault();
-  let nome = document.getElementById("nome").value;
-  let categoria = document.getElementById("categoria").value;
-  let prezzo_acquisto = parseNumero(document.getElementById("prezzo_acquisto").value);
-  let prezzo_venditaInput = document.getElementById("prezzo_vendita").value;
-  let prezzo_vendita = prezzo_venditaInput ? parseNumero(prezzo_venditaInput) : null;
-  let venditore = document.getElementById("venditore").value;
-
-  if(prezzo_acquisto<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ alert("Valori non validi"); return; }
-
-  let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
-  prodotti.unshift({id,nome,categoria,prezzo_acquisto,venditore,prezzo_vendita,vendite_effettive:0});
-
-  document.getElementById("formContainer").innerHTML = "";
-  mostraTabella();
-  salvaLocalStorage();
-}
-
-// ----------------- ELIMINA -----------------
-function eliminaProdotto(index){
-  let nome = prodotti[index].nome;
-  if(confirm(`Sei sicuro di voler eliminare "${nome}"?`)){
-    prodotti.splice(index,1);
+        let num = parseFloat(valore);
+        if(isNaN(num) || num < 0){ alert("Valore non valido"); return; }
+        prodotti[index][campo] = num;
+    } else {
+        prodotti[index][campo] = valore;
+    }
     mostraTabella();
     salvaLocalStorage();
-  }
 }
 
-// ----------------- RIEQUILIBRIO -----------------
+// Mostra form
+function mostraForm(){
+    document.getElementById("formContainer").innerHTML = `
+        <form onsubmit="aggiungiProdottoForm(event)">
+            <input type="text" id="nome" placeholder="Nome prodotto" required>
+            <select id="categoria">
+                <option>--</option>
+                <option>Scarpe</option>
+                <option>Abbigliamento</option>
+                <option>Accessori</option>
+                <option>Altro</option>
+            </select>
+            <input type="text" id="prezzo_acquisto" placeholder="Prezzo acquisto €" required>
+            <input type="text" id="prezzo_vendita" placeholder="Prezzo vendita stimato €">
+            <select id="venditore">
+                <option>--</option>
+                <option>Romeo</option>
+                <option>Ricky</option>
+            </select>
+            <input type="text" id="vendite_effettive" placeholder="Prezzo vendita effettivo €">
+            <button type="submit">Aggiungi</button>
+        </form>
+    `;
+}
+
+// Aggiungi prodotto
+function aggiungiProdottoForm(event){
+    event.preventDefault();
+    let nome = document.getElementById("nome").value;
+    let categoria = document.getElementById("categoria").value;
+    let prezzo_acquisto = parseFloat(document.getElementById("prezzo_acquisto").value.replace(",",".")) || 0;
+    let venditore = document.getElementById("venditore").value;
+    let prezzo_vendita = parseFloat(document.getElementById("prezzo_vendita").value.replace(",",".")) || null;
+    let vendite_effettive = parseFloat(document.getElementById("vendite_effettive").value.replace(",",".")) || null;
+
+    let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
+    prodotti.unshift({id,nome,categoria,prezzo_acquisto,venditore,prezzo_vendita,vendite_effettive});
+
+    document.getElementById("formContainer").innerHTML = "";
+    mostraTabella();
+    salvaLocalStorage();
+}
+
+// Elimina prodotto con conferma
+function eliminaProdotto(index){
+    let nome = prodotti[index].nome;
+    if(confirm(`Sei sicuro di voler eliminare "${nome}"?`)){
+        prodotti.splice(index,1);
+        mostraTabella();
+        salvaLocalStorage();
+    }
+}
+
+// Salvataggio locale
+function salvaLocalStorage(){
+    localStorage.setItem("prodotti", JSON.stringify(prodotti));
+}
+
+// Caricamento locale
+function caricaLocalStorage(){
+    let salvati = localStorage.getItem("prodotti");
+    if(salvati){ prodotti = JSON.parse(salvati); }
+}
+caricaLocalStorage();
+
+// Algoritmo di assegnazione
 function riequilibra(){
     prodottiRiequilibrati.clear();
 
@@ -150,10 +144,9 @@ function riequilibra(){
         Ricky: { guadagno:0, fatturato:0 } 
     };
 
-    // Calcoliamo la situazione attuale (solo prodotti già assegnati)
     prodotti.forEach(p=>{
-        if(p.venditore){
-            let prezzoVendita = p.vendite_effettive ? p.vendite_effettive : p.prezzo_vendita;
+        if(p.venditore && p.venditore!=="--"){
+            let prezzoVendita = p.vendite_effettive || p.prezzo_vendita || 0;
             let guad = prezzoVendita - p.prezzo_acquisto;
             let fatt = prezzoVendita;
 
@@ -162,75 +155,33 @@ function riequilibra(){
         }
     });
 
-    // Ora assegniamo i prodotti non assegnati
     prodotti.forEach(p=>{
-        if(!p.venditore){
-            let prezzoVendita = p.vendite_effettive ? p.vendite_effettive : p.prezzo_vendita;
+        if(!p.venditore || p.venditore==="--"){
+            let prezzoVendita = p.vendite_effettive || p.prezzo_vendita || 0;
             let guad = prezzoVendita - p.prezzo_acquisto;
             let fatt = prezzoVendita;
 
-            // Simula assegnazione a Romeo
-            let guadR = stats.Romeo.guadagno + guad;
-            let fattR = stats.Romeo.fatturato + fatt;
+            let guadRomeo = stats.Romeo.guadagno + guad;
+            let fattRomeo = stats.Romeo.fatturato + fatt;
+            let diffRomeo = Math.abs(guadRomeo - stats.Ricky.guadagno) + Math.abs(fattRomeo - stats.Ricky.fatturato);
 
-            // Simula assegnazione a Ricky
-            let guadK = stats.Ricky.guadagno + guad;
-            let fattK = stats.Ricky.fatturato + fatt;
+            let guadRicky = stats.Ricky.guadagno + guad;
+            let fattRicky = stats.Ricky.fatturato + fatt;
+            let diffRicky = Math.abs(stats.Romeo.guadagno - guadRicky) + Math.abs(stats.Romeo.fatturato - fattRicky);
 
-            // Differenze con Romeo
-            let diffRomeo = Math.abs(guadR - stats.Ricky.guadagno) + Math.abs(fattR - stats.Ricky.fatturato);
-
-            // Differenze con Ricky
-            let diffRicky = Math.abs(stats.Romeo.guadagno - guadK) + Math.abs(stats.Romeo.fatturato - fattK);
-
-            // Assegna al migliore
             if(diffRomeo <= diffRicky){
                 p.venditore = "Romeo";
-                stats.Romeo.guadagno = guadR;
-                stats.Romeo.fatturato = fattR;
+                stats.Romeo.guadagno = guadRomeo;
+                stats.Romeo.fatturato = fattRomeo;
             } else {
                 p.venditore = "Ricky";
-                stats.Ricky.guadagno = guadK;
-                stats.Ricky.fatturato = fattK;
+                stats.Ricky.guadagno = guadRicky;
+                stats.Ricky.fatturato = fattRicky;
             }
-
             prodottiRiequilibrati.add(p.id);
         }
     });
 
     mostraTabella();
     salvaLocalStorage();
-}
-
-
-// ----------------- RIEPILOGO -----------------
-function aggiornaRiepilogo(){
-  let stats = {
-    Romeo: { stimato:{guad:0,fatt:0}, reale:{guad:0,fatt:0} },
-    Ricky: { stimato:{guad:0,fatt:0}, reale:{guad:0,fatt:0} }
-  };
-
-  prodotti.forEach(p=>{
-    if(!p.venditore || p.venditore==="--") return;
-    let prezzoSt = p.prezzo_vendita || 0;
-    let prezzoRe = p.vendite_effettive || null;
-    let vend = p.venditore;
-
-    stats[vend].stimato.fatt += prezzoSt;
-    stats[vend].stimato.guad += (prezzoSt - p.prezzo_acquisto);
-
-    let prezzoUsato = prezzoRe ? prezzoRe : prezzoSt;
-    stats[vend].reale.fatt += prezzoUsato;
-    stats[vend].reale.guad += (prezzoUsato - p.prezzo_acquisto);
-  });
-
-  document.getElementById("romeoStimato").innerText = 
-    `Guadagno stimato: ${formatEuro(stats.Romeo.stimato.guad)} | Fatturato stimato: ${formatEuro(stats.Romeo.stimato.fatt)}`;
-  document.getElementById("romeoReale").innerText = 
-    `Guadagno reale: ${formatEuro(stats.Romeo.reale.guad)} | Fatturato reale: ${formatEuro(stats.Romeo.reale.fatt)}`;
-
-  document.getElementById("rickyStimato").innerText = 
-    `Guadagno stimato: ${formatEuro(stats.Ricky.stimato.guad)} | Fatturato stimato: ${formatEuro(stats.Ricky.stimato.fatt)}`;
-  document.getElementById("rickyReale").innerText = 
-    `Guadagno reale: ${formatEuro(stats.Ricky.reale.guad)} | Fatturato reale: ${formatEuro(stats.Ricky.reale.fatt)}`;
 }
