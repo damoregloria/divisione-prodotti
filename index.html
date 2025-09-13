@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-    <title>Dashboard Prodotti</title>
+   <title>Dashboard Prodotti</title>
     <script src="assegna.js"></script>
     <style>
         body {
@@ -99,31 +99,39 @@
     </style>
 </head>
 <body>
-    <div id="loginDiv">
+    <!-- Login -->
+    <div id="loginContainer">
         <h2>Accesso a Dashboard Prodotti</h2>
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">Entra</button>
+        <input type="password" id="password" placeholder="Inserisci password">
+        <button onclick="checkPassword()">Entra</button>
+        <p id="errorMsg" style="color:red; display:none;">Password errata, riprova.</p>
     </div>
 
-    <div id="mainDiv">
-        <h1>Dashboard Prodotti</h1>
-       
-        <div id="riepilogo" style="display:flex; gap:20px; justify-content:center; margin-bottom:20px;">
-            <div style="flex:1; background:#eafaf1; padding:15px; border-radius:12px; text-align:center;">
-            <h3 style="color:#006400;">Romeo</h3>
-            <p id="romeoStimato">Guadagno stimato: € 0,00 | Fatturato stimato: € 0,00</p>
-            <p id="romeoReale">Guadagno reale: € 0,00 | Fatturato reale: € 0,00</p>
-        <div>
-   </div>
-
-        <div>
+    <!-- Dashboard -->
+    <div id="appContainer" style="display:none;">
+        <h1>Gestione Prodotti</h1>
+        <div id="controls">
             <button onclick="mostraForm()">Aggiungi prodotto</button>
             <button onclick="riequilibra()">Assegna venditori automaticamente</button>
         </div>
-
         <div id="formContainer"></div>
-
-        <table id="tabella"></table>
+        <table id="tabellaProdotti">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Prezzo Acquisto</th>
+                    <th>Prezzo Vendita Stimato</th>
+                    <th>Venditore</th>
+                    <th>Prezzo Vendita Effettivo</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
+
+    <script src="assegna.js"></script>
 </body>
 </html>
