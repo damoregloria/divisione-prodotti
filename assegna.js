@@ -36,10 +36,10 @@ function mostraTabella(){
     let table = document.getElementById("tabella");
     table.innerHTML = `
         <tr>
+            <th>#</th>
             <th>Nome</th>
             <th>Categoria</th>
             <th>Prezzo Acquisto</th>
-            <th>Margine</th>
             <th>Venditore</th>
             <th>Prezzo Vendita Stimato</th>
             <th>Prezzo Vendita Effettivo</th>
@@ -49,8 +49,8 @@ function mostraTabella(){
 
     prodotti.forEach((p,index)=>{
         // calcolo automatico prezzo vendita stimato
-        if((p.prezzo_vendita===null || p.prezzo_vendita===undefined) && p.margine){
-            p.prezzo_vendita = Number(p.prezzo_acquisto) + Number(p.margine);
+        if((p.prezzo_vendita===null || p.prezzo_vendita===undefined)){
+            p.prezzo_vendita = Number(p.prezzo_acquisto);
         }
 
         let bgColor = prodottiRiequilibrati.has(p.id) ? "#d4f7d4" : "";
@@ -59,6 +59,7 @@ function mostraTabella(){
         row.style.backgroundColor = bgColor;
 
         row.innerHTML = `
+            <td>${index+1}</td>
             <td contenteditable="true" onblur="modifica(${index},'nome',this.innerText)">${p.nome}</td>
             <td>
                 <select onchange="modifica(${index},'categoria',this.value)">
@@ -70,7 +71,6 @@ function mostraTabella(){
                 </select>
             </td>
             <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${formatEuro(p.prezzo_acquisto)}</td>
-            <td contenteditable="true" onblur="modifica(${index},'margine',this.innerText)">${formatEuro(p.margine)}</td>
             <td>
                 <select onchange="modifica(${index},'venditore',this.value)">
                     <option value="">--</option>
@@ -88,14 +88,14 @@ function mostraTabella(){
 // Modifica tabella
 function modifica(index, campo, valore){
     valore = valore.replace('€','').replace(',','.');
-    if(['prezzo_acquisto','margine','prezzo_vendita','vendite_effettive'].includes(campo)){
+    if(['prezzo_acquisto','prezzo_vendita','vendite_effettive'].includes(campo)){
         let num = Number(valore.trim());
         if(isNaN(num) || num < 0){ alert("Valore non valido"); mostraTabella(); return; }
         prodotti[index][campo] = num;
 
         // ricalcolo automatico prezzo vendita stimato
-        if((campo==='prezzo_acquisto' || campo==='margine') && (!prodotti[index].prezzo_vendita || prodotti[index].prezzo_vendita===0)){
-            prodotti[index].prezzo_vendita = Number(prodotti[index].prezzo_acquisto) + Number(prodotti[index].margine);
+        if(campo==='prezzo_acquisto' && (!prodotti[index].prezzo_vendita || prodotti[index].prezzo_vendita===0)){
+            prodotti[index].prezzo_vendita = Number(prodotti[index].prezzo_acquisto);
         }
     } else {
         prodotti[index][campo] = valore;
@@ -117,9 +117,8 @@ function mostraForm(){
                 <option value="Accessori">Accessori</option>
                 <option value="Altro">Altro</option>
             </select>
-            <input type="number" id="prezzo_acquisto" placeholder="Prezzo acquisto" min="0" required>
-            <input type="number" id="margine" placeholder="Margine" min="0" required>
-            <input type="number" id="prezzo_vendita" placeholder="Prezzo vendita stimato (opzionale)" min="0">
+            <input type="text" id="prezzo_acquisto" placeholder="Prezzo acquisto (€)" required>
+            <input type="text" id="prezzo_vendita" placeholder="Prezzo vendita stimato (opzionale)">
             <select id="venditore">
                 <option value="">--</option>
                 <option value="Romeo">Romeo</option>
@@ -135,27 +134,33 @@ function aggiungiProdottoForm(event){
     event.preventDefault();
     let nome = document.getElementById("nome").value;
     let categoria = document.getElementById("categoria").value;
-    let prezzo_acquisto = Number(document.getElementById("prezzo_acquisto").value);
-    let margine = Number(document.getElementById("margine").value);
-    let prezzo_venditaInput = document.getElementById("prezzo_vendita").value;
+    let prezzo_acquisto = document.getElementById("prezzo_acquisto").value.replace(',','.');
+    let prezzo_venditaInput = document.getElementById("prezzo_vendita").value.replace(',','.');
     let prezzo_vendita = prezzo_venditaInput ? Number(prezzo_venditaInput) : null;
     let venditore = document.getElementById("venditore").value;
 
-    if(prezzo_acquisto<0 || margine<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ alert("Valori non validi"); return; }
+    prezzo_acquisto = Number(prezzo_acquisto);
+    if(isNaN(prezzo_acquisto) || prezzo_acquisto<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ 
+        alert("Valori non validi"); 
+        return; 
+    }
 
     let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
-    prodotti.unshift({id,nome,categoria,prezzo_acquisto,margine,venditore,prezzo_vendita,vendite_effettive:0});
+    prodotti.unshift({id,nome,categoria,prezzo_acquisto,venditore,prezzo_vendita,vendite_effettive:0});
 
     document.getElementById("formContainer").innerHTML = "";
     mostraTabella();
     salvaLocalStorage();
 }
 
-// Elimina prodotto
+// Elimina prodotto con conferma
 function eliminaProdotto(index){
-    prodotti.splice(index,1);
-    mostraTabella();
-    salvaLocalStorage();
+    let nome = prodotti[index].nome || "questo prodotto";
+    if(confirm(`Sei sicuro di voler eliminare "${nome}"?`)){
+        prodotti.splice(index,1);
+        mostraTabella();
+        salvaLocalStorage();
+    }
 }
 
 // Riequilibrio automatico
@@ -167,8 +172,5 @@ function riequilibra(){
     mostraTabella();
     salvaLocalStorage();
 }
-
-window.onload = function(){ };
-
 
 window.onload = function(){ };
