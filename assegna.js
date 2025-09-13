@@ -143,55 +143,65 @@ function eliminaProdotto(index){
 
 // ----------------- RIEQUILIBRIO -----------------
 function riequilibra(){
-  prodottiRiequilibrati.clear();
+    prodottiRiequilibrati.clear();
 
-  let stats = { Romeo:{guad:0,fatt:0}, Ricky:{guad:0,fatt:0} };
+    let stats = { 
+        Romeo: { guadagno:0, fatturato:0 }, 
+        Ricky: { guadagno:0, fatturato:0 } 
+    };
 
-  // inizializza con assegnati
-  prodotti.forEach(p=>{
-    if(p.venditore && p.venditore!=="--"){
-      let prezzo = p.vendite_effettive || p.prezzo_vendita || 0;
-      stats[p.venditore].guad += (prezzo - p.prezzo_acquisto);
-      stats[p.venditore].fatt += prezzo;
-    }
-  });
+    // Calcoliamo la situazione attuale (solo prodotti già assegnati)
+    prodotti.forEach(p=>{
+        if(p.venditore){
+            let prezzoVendita = p.vendite_effettive ? p.vendite_effettive : p.prezzo_vendita;
+            let guad = prezzoVendita - p.prezzo_acquisto;
+            let fatt = prezzoVendita;
 
-  // assegna i vuoti
-  prodotti.forEach(p=>{
-    if(!p.venditore || p.venditore==="--"){
-      let prezzo = p.vendite_effettive || p.prezzo_vendita || 0;
-      let guad = prezzo - p.prezzo_acquisto;
+            stats[p.venditore].guadagno += guad;
+            stats[p.venditore].fatturato += fatt;
+        }
+    });
 
-      // prova Romeo
-      let rRomeo = {
-        guad: stats.Romeo.guad + guad,
-        fatt: stats.Romeo.fatt + prezzo
-      };
-      let rRicky = {...stats.Ricky};
-      let squilibrioRomeo = Math.abs(rRomeo.guad - rRicky.guad) + Math.abs(rRomeo.fatt - rRicky.fatt);
+    // Ora assegniamo i prodotti non assegnati
+    prodotti.forEach(p=>{
+        if(!p.venditore){
+            let prezzoVendita = p.vendite_effettive ? p.vendite_effettive : p.prezzo_vendita;
+            let guad = prezzoVendita - p.prezzo_acquisto;
+            let fatt = prezzoVendita;
 
-      // prova Ricky
-      let rRicky2 = {
-        guad: stats.Ricky.guad + guad,
-        fatt: stats.Ricky.fatt + prezzo
-      };
-      let rRomeo2 = {...stats.Romeo};
-      let squilibrioRicky = Math.abs(rRomeo2.guad - rRicky2.guad) + Math.abs(rRomeo2.fatt - rRicky2.fatt);
+            // Simula assegnazione a Romeo
+            let guadR = stats.Romeo.guadagno + guad;
+            let fattR = stats.Romeo.fatturato + fatt;
 
-      if(squilibrioRomeo <= squilibrioRicky){
-        p.venditore = "Romeo";
-        stats.Romeo = rRomeo;
-      } else {
-        p.venditore = "Ricky";
-        stats.Ricky = rRicky2;
-      }
-      prodottiRiequilibrati.add(p.id);
-    }
-  });
+            // Simula assegnazione a Ricky
+            let guadK = stats.Ricky.guadagno + guad;
+            let fattK = stats.Ricky.fatturato + fatt;
 
-  mostraTabella();
-  salvaLocalStorage();
+            // Differenze con Romeo
+            let diffRomeo = Math.abs(guadR - stats.Ricky.guadagno) + Math.abs(fattR - stats.Ricky.fatturato);
+
+            // Differenze con Ricky
+            let diffRicky = Math.abs(stats.Romeo.guadagno - guadK) + Math.abs(stats.Romeo.fatturato - fattK);
+
+            // Assegna al migliore
+            if(diffRomeo <= diffRicky){
+                p.venditore = "Romeo";
+                stats.Romeo.guadagno = guadR;
+                stats.Romeo.fatturato = fattR;
+            } else {
+                p.venditore = "Ricky";
+                stats.Ricky.guadagno = guadK;
+                stats.Ricky.fatturato = fattK;
+            }
+
+            prodottiRiequilibrati.add(p.id);
+        }
+    });
+
+    mostraTabella();
+    salvaLocalStorage();
 }
+
 
 // ----------------- RIEPILOGO -----------------
 function aggiornaRiepilogo(){
