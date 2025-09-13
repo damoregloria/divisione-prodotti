@@ -1,176 +1,226 @@
-let prodotti = [];
+let prodotti = JSON.parse(localStorage.getItem("prodotti")) || [];
 let prodottiRiequilibrati = new Set();
+const PASSWORD = "ciao123";
 
-// Persistenza
-function salvaLocalStorage() {
-    localStorage.setItem("prodotti", JSON.stringify(prodotti));
+// ----------------- LOGIN -----------------
+function checkPassword(){
+  let pw = document.getElementById("passwordInput").value;
+  if(pw === PASSWORD){
+    document.getElementById("loginDiv").style.display = "none";
+    document.getElementById("mainDiv").style.display = "block";
+    mostraTabella();
+  } else {
+    alert("Password errata");
+  }
 }
 
-function caricaLocalStorage() {
-    let dati = localStorage.getItem("prodotti");
-    if(dati){
-        prodotti = JSON.parse(dati);
-        mostraTabella();
-    }
-}
-
-// Login password
-function login(){
-    const pwd = document.getElementById("password").value;
-    if(pwd === "1234"){
-        document.getElementById("loginDiv").style.display="none";
-        document.getElementById("mainDiv").style.display="block";
-        caricaLocalStorage();
-    } else {
-        alert("Password errata!");
-    }
-}
-
-// Formatta prezzo con centesimi
+// ----------------- FORMATTAZIONE -----------------
 function formatEuro(value){
-    return Number(value).toFixed(2).replace('.',',') + ' €';
+  if(isNaN(value) || value === null) return "€ 0,00";
+  return "€ " + Number(value).toFixed(2).replace('.',',');
 }
 
-// Mostra tabella
+function parseNumero(val){
+  if(!val) return 0;
+  return Number(val.toString().replace(',','.'));
+}
+
+// ----------------- STORAGE -----------------
+function salvaLocalStorage(){
+  localStorage.setItem("prodotti", JSON.stringify(prodotti));
+}
+
+// ----------------- MOSTRA TABELLA -----------------
 function mostraTabella(){
-    let table = document.getElementById("tabella");
-    table.innerHTML = `
-        <tr>
-            <th>#</th>
-            <th>Nome</th>
-            <th>Categoria</th>
-            <th>Prezzo Acquisto</th>
-            <th>Prezzo Vendita Stimato</th>
-            <th>Venditore</th>
-            <th>Prezzo Vendita Effettivo</th>
-            <th>Azioni</th>
-        </tr>
+  let tbody = document.querySelector("#tabellaProdotti tbody");
+  tbody.innerHTML = "";
+
+  prodotti.forEach((p,index)=>{
+    let row = document.createElement("tr");
+    if(prodottiRiequilibrati.has(p.id)) row.style.backgroundColor = "#f0fff0";
+
+    row.innerHTML = `
+      <td>${index+1}</td>
+      <td contenteditable onblur="aggiorna(${index},'nome',this.innerText)">${p.nome}</td>
+      <td>
+        <select onchange="aggiorna(${index},'categoria',this.value)">
+          <option ${p.categoria=="--"?"selected":""}>--</option>
+          <option ${p.categoria=="Scarpe"?"selected":""}>Scarpe</option>
+          <option ${p.categoria=="Abbigliamento"?"selected":""}>Abbigliamento</option>
+          <option ${p.categoria=="Accessori"?"selected":""}>Accessori</option>
+          <option ${p.categoria=="Altro"?"selected":""}>Altro</option>
+        </select>
+      </td>
+      <td contenteditable onblur="aggiorna(${index},'prezzo_acquisto',this.innerText)">${formatEuro(p.prezzo_acquisto)}</td>
+      <td>
+        <select onchange="aggiorna(${index},'venditore',this.value)">
+          <option ${p.venditore=="--"?"selected":""}>--</option>
+          <option ${p.venditore=="Romeo"?"selected":""}>Romeo</option>
+          <option ${p.venditore=="Ricky"?"selected":""}>Ricky</option>
+        </select>
+      </td>
+      <td contenteditable onblur="aggiorna(${index},'prezzo_vendita',this.innerText)">${formatEuro(p.prezzo_vendita)}</td>
+      <td contenteditable onblur="aggiorna(${index},'vendite_effettive',this.innerText)">${formatEuro(p.vendite_effettive)}</td>
+      <td><button onclick="eliminaProdotto(${index})">Elimina</button></td>
     `;
+    tbody.appendChild(row);
+  });
 
-    prodotti.forEach((p,index)=>{
-        // calcolo automatico prezzo vendita stimato
-        if((p.prezzo_vendita===null || p.prezzo_vendita===undefined)){
-            p.prezzo_vendita = Number(p.prezzo_acquisto);
-        }
-
-        let bgColor = prodottiRiequilibrati.has(p.id) ? "#d4f7d4" : "";
-
-        let row = table.insertRow();
-        row.style.backgroundColor = bgColor;
-
-        row.innerHTML = `
-            <td>${index+1}</td>
-            <td contenteditable="true" onblur="modifica(${index},'nome',this.innerText)">${p.nome}</td>
-            <td>
-                <select onchange="modifica(${index},'categoria',this.value)">
-                    <option value="">--</option>
-                    <option value="Scarpe" ${p.categoria==='Scarpe'?'selected':''}>Scarpe</option>
-                    <option value="Abbigliamento" ${p.categoria==='Abbigliamento'?'selected':''}>Abbigliamento</option>
-                    <option value="Accessori" ${p.categoria==='Accessori'?'selected':''}>Accessori</option>
-                    <option value="Altro" ${p.categoria==='Altro'?'selected':''}>Altro</option>
-                </select>
-            </td>
-            <td contenteditable="true" onblur="modifica(${index},'prezzo_acquisto',this.innerText)">${formatEuro(p.prezzo_acquisto)}</td>
-            <td>
-                <select onchange="modifica(${index},'venditore',this.value)">
-                    <option value="">--</option>
-                    <option value="Romeo" ${p.venditore==='Romeo'?'selected':''}>Romeo</option>
-                    <option value="Ricky" ${p.venditore==='Ricky'?'selected':''}>Ricky</option>
-                </select>
-            </td>
-            <td>${p.prezzo_vendita ? formatEuro(p.prezzo_vendita) : ''}</td>
-            <td contenteditable="true" onblur="modifica(${index},'vendite_effettive',this.innerText)">${p.vendite_effettive ? formatEuro(p.vendite_effettive) : ''}</td>
-            <td><button onclick="eliminaProdotto(${index})">Elimina</button></td>
-        `;
-    });
+  aggiornaRiepilogo();
 }
 
-// Modifica tabella
-function modifica(index, campo, valore){
-    valore = valore.replace('€','').replace(',','.');
-    if(['prezzo_acquisto','prezzo_vendita','vendite_effettive'].includes(campo)){
-        let num = Number(valore.trim());
-        if(isNaN(num) || num < 0){ alert("Valore non valido"); mostraTabella(); return; }
-        prodotti[index][campo] = num;
+// ----------------- AGGIORNAMENTO CAMPI -----------------
+function aggiorna(index,campo,val){
+  if(campo==="prezzo_acquisto" || campo==="prezzo_vendita" || campo==="vendite_effettive"){
+    val = parseNumero(val);
+    if(val<0){ alert("Valore non valido"); return; }
+  }
 
-        // ricalcolo automatico prezzo vendita stimato
-        if(campo==='prezzo_acquisto' && (!prodotti[index].prezzo_vendita || prodotti[index].prezzo_vendita===0)){
-            prodotti[index].prezzo_vendita = Number(prodotti[index].prezzo_acquisto);
-        }
-    } else {
-        prodotti[index][campo] = valore;
-    }
-    mostraTabella();
-    salvaLocalStorage();
+  prodotti[index][campo] = val;
+
+  // Calcolo automatico prezzo stimato se non presente
+  if(campo==="prezzo_acquisto" && !prodotti[index].prezzo_vendita){
+    prodotti[index].prezzo_vendita = prodotti[index].prezzo_acquisto;
+  }
+
+  mostraTabella();
+  salvaLocalStorage();
 }
 
-// Mostra form per aggiungere prodotto
+// ----------------- FORM NUOVO PRODOTTO -----------------
 function mostraForm(){
-    const container = document.getElementById("formContainer");
-    container.innerHTML = `
-        <form id="formProdotto" onsubmit="aggiungiProdottoForm(event)">
-            <input type="text" id="nome" placeholder="Nome prodotto" required>
-            <select id="categoria" required>
-                <option value="">--</option>
-                <option value="Scarpe">Scarpe</option>
-                <option value="Abbigliamento">Abbigliamento</option>
-                <option value="Accessori">Accessori</option>
-                <option value="Altro">Altro</option>
-            </select>
-            <input type="text" id="prezzo_acquisto" placeholder="Prezzo acquisto (€)" required>
-            <input type="text" id="prezzo_vendita" placeholder="Prezzo vendita stimato (opzionale)">
-            <select id="venditore">
-                <option value="">--</option>
-                <option value="Romeo">Romeo</option>
-                <option value="Ricky">Ricky</option>
-            </select>
-            <button type="submit">Aggiungi</button>
-        </form>
-    `;
+  let formContainer = document.getElementById("formContainer");
+  formContainer.innerHTML = `
+    <form onsubmit="aggiungiProdottoForm(event)">
+      <input type="text" id="nome" placeholder="Nome prodotto" required>
+      <select id="categoria">
+        <option>--</option>
+        <option>Scarpe</option>
+        <option>Abbigliamento</option>
+        <option>Accessori</option>
+        <option>Altro</option>
+      </select>
+      <input type="text" id="prezzo_acquisto" placeholder="Prezzo Acquisto (€)" required>
+      <input type="text" id="prezzo_vendita" placeholder="Prezzo Vendita Stimato (€)">
+      <select id="venditore">
+        <option>--</option>
+        <option>Romeo</option>
+        <option>Ricky</option>
+      </select>
+      <button type="submit">Aggiungi</button>
+    </form>
+  `;
 }
 
-// Aggiungi prodotto dal form (all’inizio)
 function aggiungiProdottoForm(event){
-    event.preventDefault();
-    let nome = document.getElementById("nome").value;
-    let categoria = document.getElementById("categoria").value;
-    let prezzo_acquisto = document.getElementById("prezzo_acquisto").value.replace(',','.');
-    let prezzo_venditaInput = document.getElementById("prezzo_vendita").value.replace(',','.');
-    let prezzo_vendita = prezzo_venditaInput ? Number(prezzo_venditaInput) : null;
-    let venditore = document.getElementById("venditore").value;
+  event.preventDefault();
+  let nome = document.getElementById("nome").value;
+  let categoria = document.getElementById("categoria").value;
+  let prezzo_acquisto = parseNumero(document.getElementById("prezzo_acquisto").value);
+  let prezzo_venditaInput = document.getElementById("prezzo_vendita").value;
+  let prezzo_vendita = prezzo_venditaInput ? parseNumero(prezzo_venditaInput) : null;
+  let venditore = document.getElementById("venditore").value;
 
-    prezzo_acquisto = Number(prezzo_acquisto);
-    if(isNaN(prezzo_acquisto) || prezzo_acquisto<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ 
-        alert("Valori non validi"); 
-        return; 
-    }
+  if(prezzo_acquisto<0 || (prezzo_vendita!==null && prezzo_vendita<0)){ alert("Valori non validi"); return; }
 
-    let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
-    prodotti.unshift({id,nome,categoria,prezzo_acquisto,venditore,prezzo_vendita,vendite_effettive:0});
+  let id = prodotti.length ? Math.max(...prodotti.map(p=>p.id))+1 : 1;
+  prodotti.unshift({id,nome,categoria,prezzo_acquisto,venditore,prezzo_vendita,vendite_effettive:0});
 
-    document.getElementById("formContainer").innerHTML = "";
-    mostraTabella();
-    salvaLocalStorage();
+  document.getElementById("formContainer").innerHTML = "";
+  mostraTabella();
+  salvaLocalStorage();
 }
 
-// Elimina prodotto con conferma
+// ----------------- ELIMINA -----------------
 function eliminaProdotto(index){
-    let nome = prodotti[index].nome || "questo prodotto";
-    if(confirm(`Sei sicuro di voler eliminare "${nome}"?`)){
-        prodotti.splice(index,1);
-        mostraTabella();
-        salvaLocalStorage();
-    }
-}
-
-// Riequilibrio automatico
-function riequilibra(){
-    prodottiRiequilibrati.clear();
-    prodotti.forEach(p=>{
-        if(!p.venditore){ prodottiRiequilibrati.add(p.id); }
-    });
+  let nome = prodotti[index].nome;
+  if(confirm(`Sei sicuro di voler eliminare "${nome}"?`)){
+    prodotti.splice(index,1);
     mostraTabella();
     salvaLocalStorage();
+  }
 }
 
-window.onload = function(){ };
+// ----------------- RIEQUILIBRIO -----------------
+function riequilibra(){
+  prodottiRiequilibrati.clear();
+
+  let stats = { Romeo:{guad:0,fatt:0}, Ricky:{guad:0,fatt:0} };
+
+  // inizializza con assegnati
+  prodotti.forEach(p=>{
+    if(p.venditore && p.venditore!=="--"){
+      let prezzo = p.vendite_effettive || p.prezzo_vendita || 0;
+      stats[p.venditore].guad += (prezzo - p.prezzo_acquisto);
+      stats[p.venditore].fatt += prezzo;
+    }
+  });
+
+  // assegna i vuoti
+  prodotti.forEach(p=>{
+    if(!p.venditore || p.venditore==="--"){
+      let prezzo = p.vendite_effettive || p.prezzo_vendita || 0;
+      let guad = prezzo - p.prezzo_acquisto;
+
+      // prova Romeo
+      let rRomeo = {
+        guad: stats.Romeo.guad + guad,
+        fatt: stats.Romeo.fatt + prezzo
+      };
+      let rRicky = {...stats.Ricky};
+      let squilibrioRomeo = Math.abs(rRomeo.guad - rRicky.guad) + Math.abs(rRomeo.fatt - rRicky.fatt);
+
+      // prova Ricky
+      let rRicky2 = {
+        guad: stats.Ricky.guad + guad,
+        fatt: stats.Ricky.fatt + prezzo
+      };
+      let rRomeo2 = {...stats.Romeo};
+      let squilibrioRicky = Math.abs(rRomeo2.guad - rRicky2.guad) + Math.abs(rRomeo2.fatt - rRicky2.fatt);
+
+      if(squilibrioRomeo <= squilibrioRicky){
+        p.venditore = "Romeo";
+        stats.Romeo = rRomeo;
+      } else {
+        p.venditore = "Ricky";
+        stats.Ricky = rRicky2;
+      }
+      prodottiRiequilibrati.add(p.id);
+    }
+  });
+
+  mostraTabella();
+  salvaLocalStorage();
+}
+
+// ----------------- RIEPILOGO -----------------
+function aggiornaRiepilogo(){
+  let stats = {
+    Romeo: { stimato:{guad:0,fatt:0}, reale:{guad:0,fatt:0} },
+    Ricky: { stimato:{guad:0,fatt:0}, reale:{guad:0,fatt:0} }
+  };
+
+  prodotti.forEach(p=>{
+    if(!p.venditore || p.venditore==="--") return;
+    let prezzoSt = p.prezzo_vendita || 0;
+    let prezzoRe = p.vendite_effettive || null;
+    let vend = p.venditore;
+
+    stats[vend].stimato.fatt += prezzoSt;
+    stats[vend].stimato.guad += (prezzoSt - p.prezzo_acquisto);
+
+    let prezzoUsato = prezzoRe ? prezzoRe : prezzoSt;
+    stats[vend].reale.fatt += prezzoUsato;
+    stats[vend].reale.guad += (prezzoUsato - p.prezzo_acquisto);
+  });
+
+  document.getElementById("romeoStimato").innerText = 
+    `Guadagno stimato: ${formatEuro(stats.Romeo.stimato.guad)} | Fatturato stimato: ${formatEuro(stats.Romeo.stimato.fatt)}`;
+  document.getElementById("romeoReale").innerText = 
+    `Guadagno reale: ${formatEuro(stats.Romeo.reale.guad)} | Fatturato reale: ${formatEuro(stats.Romeo.reale.fatt)}`;
+
+  document.getElementById("rickyStimato").innerText = 
+    `Guadagno stimato: ${formatEuro(stats.Ricky.stimato.guad)} | Fatturato stimato: ${formatEuro(stats.Ricky.stimato.fatt)}`;
+  document.getElementById("rickyReale").innerText = 
+    `Guadagno reale: ${formatEuro(stats.Ricky.reale.guad)} | Fatturato reale: ${formatEuro(stats.Ricky.reale.fatt)}`;
+}
